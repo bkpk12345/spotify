@@ -56,7 +56,7 @@ router.get('/callback', (req, res) => {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: redirect_uri,
+      redirect_uri: 'https://canaryandspotify.herokuapp.com/api/home',
       grant_type: 'authorization_code'
     },
     headers: {
@@ -105,7 +105,7 @@ router.get('/callback', (req, res) => {
   // }
 });
 
-router.get('/', (req, res) => {
+router.get('/home', (req, res) => {
   res.send('final redirect');
 });
 
