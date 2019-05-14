@@ -105,4 +105,8 @@ router.get('/callback', (req, res) => {
   // }
 });
 
+router.get('/', (req, res) => {
+  res.send('final redirect');
+});
+
 module.exports = router;
