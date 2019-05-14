@@ -1,20 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const request = require('request');
+const cors = require('cors');
+const querystring = require('querystring');
+const cookieParser = require('cookie-parser');
+
+const generateRandomString = function(length) {
+  let text = '';
+  let possible =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+  for (let i = 0; i < length; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+};
+
 router.get('/login', (req, res) => {
-  request(
-    {
-      method: 'GET',
-      uri: 'https://accounts.spotify.com/authorize',
-      useQuerystring: {
-        client_id: process.env.Client_ID,
+  var state = generateRandomString(16);
+  res.cookie(stateKey, state);
+
+  // your application requests authorization
+  var scope = 'user-read-private user-read-email';
+  res.redirect(
+    'https://accounts.spotify.com/authorize?' +
+      querystring.stringify({
         response_type: 'code',
-        redirect_uri: 'localhosts:3000/callback'
-      }
-    },
-    (er, html, body) => {
-      res.send(body);
-    }
+        client_id: process.env.Client_ID,
+        scope: scope,
+        redirect_uri: 'https://canaryandspotify.herokuapp.com/api/callback',
+        state: state
+      })
   );
 });
 
