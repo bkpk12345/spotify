@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const request = require('request');
+const rp = require('request-promise');
 const cors = require('cors');
 const querystring = require('querystring');
 const cookieParser = require('cookie-parser');
@@ -29,7 +30,7 @@ router.get('/login', (req, res) => {
         response_type: 'code',
         client_id: process.env.Client_ID,
         scope: scope,
-        redirect_uri: 'https://canaryandspotify.herokuapp.com/api/callback',
+        redirect_uri: 'http://localhost:3000/api/callback',
         state: state
       })
   );
@@ -42,7 +43,6 @@ router.get('/callback', (req, res) => {
   var code = req.query.code || null;
   var state = req.query.state || null;
   var storedState = req.cookies ? req.cookies[stateKey] : null;
-  console.log({ code, state, storedState });
   // if (state === null || state !== storedState) {
   //   res.redirect(
   //     '/#' +
@@ -56,7 +56,7 @@ router.get('/callback', (req, res) => {
     url: 'https://accounts.spotify.com/api/token',
     form: {
       code: code,
-      redirect_uri: 'https://canaryandspotify.herokuapp.com/api/home',
+      redirect_uri: 'http://localhost:3000/api/callback',
       grant_type: 'authorization_code'
     },
     headers: {
@@ -74,7 +74,7 @@ router.get('/callback', (req, res) => {
       var access_token = body.access_token,
         refresh_token = body.refresh_token;
 
-      console.log('<<>>>>>><<<', { access_token, refresh_token });
+      // console.log('<<>>>>>><<<', { access_token, refresh_token });
 
       var options = {
         url: 'https://api.spotify.com/v1/me',
@@ -84,12 +84,12 @@ router.get('/callback', (req, res) => {
 
       // use the access token to access the Spotify Web API
       request.get(options, function(error, response, body) {
-        console.log(body);
+        // console.log({ body });
       });
 
       // we can also pass the token to the browser to make requests from there
       res.redirect(
-        '/#' +
+        '/api/home?' +
           querystring.stringify({
             access_token: access_token,
             refresh_token: refresh_token
@@ -97,7 +97,7 @@ router.get('/callback', (req, res) => {
       );
     } else {
       res.redirect(
-        '/#' +
+        '/api/error?' +
           querystring.stringify({
             error: 'invalid_token'
           })
@@ -107,8 +107,24 @@ router.get('/callback', (req, res) => {
   // }
 });
 
-router.get('/home', (req, res) => {
-  res.send('final redirect');
+router.get('/home', async (req, res) => {
+  let options = {
+    uri: 'https://api.spotify.com/v1/artists/53A0W3U0s8diEn9RhXQhVz',
+    headers: {
+      Authorization: `Bearer ${req.query.access_token}`
+    }
+  };
+
+  let data = await rp(options);
+  data = JSON.parse(data);
+  res.send({ data: data.href });
+
+  // request(options, (er, html, body) => {
+  //   return res.pipe({ body });
+  // });
 });
 
+router.get('/error', (req, res) => {
+  res.send('some error');
+});
 module.exports = router;
